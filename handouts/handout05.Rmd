@@ -1,0 +1,161 @@
+---
+title: "Handout 05: Data Manipulation"
+date: Taylor Arnold
+output:
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+---
+
+
+```{r global_options, include=FALSE}
+library(tufte)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(tidy = FALSE)
+
+library(tidyverse)
+library(smodels)
+library(forcats)
+library(ggrepel)
+
+theme_set(theme_minimal())
+```
+
+\justify
+
+\newthought{So far we have primarily} been working with a single
+dataset as it was directly given to us. In many cases it is
+advantageous to produce new datasets from our original one. This
+can be as simple as selecting a subset of the original columns
+or rows, or as involved as changing the *level of analysis* of
+the entire dataset. This handout will introduce several functions
+called *verbs* that assist in manipulating datasets. These all come
+from the package **dplyr**, contained in **tidymodels**.
+
+In this handout, as with the others so far, I will use the `msleep`
+dataset in order to show various numerical summaries. To read it in
+use the following:
+
+```{r}
+data(msleep)
+```
+
+# A grammar for data manipulation
+
+The *verbs* in **dplyr** take either one or
+two existing datasets and return a new dataset. There are roughly 30
+different verbs, of which we'll use only about 4 in this course:^[
+Actually, `group_summarize` is a verb that I wrote specifically for this
+course and comes from the **smodels** package. It combines several **dplyr**
+verbs in a particularly useful way.]
+
+* `filter`
+* `mutate`
+* `group_summarize`
+* `left_join`
+
+These verbs on their own are relatively straightforward, but can be tied
+together to produce suprisingly complex new datasets.
+
+## Filtering rows
+
+The filter function takes a dataset followed by a logical statements.
+It returns a dataset that has any rows in the input data that match the
+filtering statements. For example, the following returns a dataset for
+all mammals that are awake more than 20 hours per day:
+
+```{r echo = TRUE}
+filter(msleep, awake > 20)
+```
+
+It is very important to notice that the original `msleep` dataset has not been
+altered here. If we want to actually work with the filtered data,
+we need to save it using the assignment operator `<-` and given it a name. To
+pull out just the *sleepy* mammals, we could do the following:
+
+```{r echo = TRUE, eval = FALSE}
+sleepy <- filter(msleep, awake < 6)
+```
+
+You should see now that a new dataset appears in your workspace named `sleepy`.
+It is possible to work with this new dataset in all of the ways we have plotted and
+(now) filtered the original data.
+
+## Constructing new variables
+
+The `mutate` function preserves all rows of the original dataset, unlike `filter`,
+but adds a new variables. For example, to add hours asleep into the dataset
+we can do this:
+
+```{r echo = TRUE}
+msleep <- mutate(msleep, asleep = 24 - awake)
+```
+
+Here, I used the assignment command to save the result back into the `msleep`
+dataset. If you look in your environment window, you'll still see just a single
+version of `msleep` but this one will have one extra variables. This is a relatively
+safe pratice with the mutate function, as we are simply adding information, but
+should be generally avoided when using filter.^[It is possible to use mutate to
+redefine an existing variable by giving mutate a variable name that already exists.
+Be careful of this, particularly if you are overwritting the original dataset.]
+
+## Summarizing data
+
+The `group_summarize` function is, in my opinion, the most complex verb that
+we will use this semester. If we use the function on a dataset without any
+other options it gives the mean, median, standard deviation, and sum for
+every numeric  variable in the dataset. An overall count is also included.
+Let's apply it to `msleep`:
+
+```{r echo = TRUE, eval = TRUE}
+group_summarize(msleep)
+```
+
+These variables could have easily been computed by calling the respective
+functions indvidually in R. The group summarize function becomes more
+interesting when we pass it a second input giving a variable to group by.
+For example, here is the summary *grouped by vore*
+
+```{r echo = TRUE, eval = TRUE}
+group_summarize(msleep, vore)
+```
+
+Notice that the result now provides these summaries for each group. It
+is possible to summarize by multiple groups at once, which produces
+summaries for each unique combination of the those variables. For instance,
+we could summarize by both genus and vore:
+
+```{r echo = TRUE, eval = TRUE}
+group_summarize(msleep, vore, genus)
+```
+
+And there is now a row for each combination of `vore` and `genus`.
+
+# Combine datasets
+
+The final verb that we will use this semester is also the only two-table
+verb that we will need. It will be used to combine a dataset with metadata
+about one or more of its variables. To illustrate, let's make a small
+dataframe that contains the full name for the short-hand abbreviations
+given in the variable `vore`:
+
+```{r echo = TRUE}
+meta <- data_frame(vore = c("carni", "omni", "herbi", "insecti"),
+                   full_name = c("carnivore", "omnivore", "herbivore",
+                                 "insectivore"))
+meta
+```
+
+To combine these with the original dataset, we use the `left_join` function,
+giving the larger dataset first:
+
+```{r echo = TRUE}
+msleep <- left_join(msleep, meta)
+msleep
+```
+
+Notice that there is a new variable `full_name` that now displays the
+full name for each `vore` type.
+
+
+

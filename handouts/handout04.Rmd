@@ -1,0 +1,94 @@
+---
+title: "Handout 04: Advanced graphics"
+date: Taylor Arnold
+output:
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+---
+
+
+```{r global_options, include=FALSE}
+library(dplyr)
+library(ggplot2)
+library(tufte)
+knitr::opts_chunk$set(results = "hide")
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(tidy = FALSE)
+
+library(ggplot2)
+library(ggrepel)
+library(dplyr)
+library(readr)
+library(MASS)
+
+theme_set(theme_minimal())
+```
+
+\justify
+
+\newthought{We have already seen how to build fairly} complex
+graphics within R. This handout fills in a few gaps that will
+serve us well throughout the remainder of the semester.
+
+In this handout, I will again use the `msleep` dataset in
+my examples:
+
+```{r}
+data(msleep)
+```
+
+# Multiple Datasets
+
+It is possible to plot multiple datasets in a single graphic. This
+is particularly useful when combined with the `filter` function. For
+example, we can highlight the insectivores by filtering them into a
+seperate dataset:
+
+```{r}
+insecti <- filter(msleep, vore == "insecti")
+```
+
+And then ploting all of the mammals in black, but the insectivores
+in red. This is accomplished by using the `geom_point` function and
+giving it the name of the secondary dataset:
+
+```{r fig.width=8, fig.height=8}
+qplot(awake, sleep_rem, data = msleep) +
+  geom_point(data = insecti, color = I("red"))
+```
+
+We can add multiple layers to the same plot. For example, the
+`geom_text_repel` adds smart labels to the plot; using it we can label
+all of the insectivores in our dataset:
+
+```{r fig.width=8, fig.height=8}
+qplot(awake, sleep_rem, label = name, alpha = I(0.5), data = msleep) +
+  geom_point(data = insecti, color = I("red")) +
+  geom_text_repel(data = insecti)
+```
+
+These types of plots become very useful for understanding how one subset
+relates to a larger collection of points.
+
+# Labels
+
+The default labels on our plots are mostly fine for exploratory analysis.
+When presenting your work in a paper or other venue it can, however, be
+useful to modify these with more descriptive terms. To do so, we simply
+add the functions `xlab`, `ylab`, and `ggtitle` to the plot. For example:
+
+```{r fig.width=8, fig.height=8}
+qplot(awake, sleep_rem, label = name, alpha = I(0.5), data = msleep) +
+  geom_point(data = insecti, color = I("red")) +
+  geom_text_repel(data = insecti) +
+  xlab("Average hours awake in 24 hour time period") +
+  ylab("Average hours spent in REM sleep in 24 hour period") +
+  ggtitle("Insectivore sleep patterns relative to other mammals")
+```
+
+You may of course add only those elements you wish to choose; those not
+specified will be left at their default values.
+
+
+
