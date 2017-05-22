@@ -78,8 +78,8 @@ sleepy <- filter(msleep, awake < 6)
 ```
 
 You should see now that a new dataset appears in your workspace named `sleepy`.
-It is possible to work with this new dataset in all of the ways we have plotted and
-(now) filtered the original data.
+It is possible to work with this new dataset in all of the ways we have
+plotted and (now) filtered the original data.
 
 ## Constructing new variables
 

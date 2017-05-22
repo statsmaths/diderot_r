@@ -5,6 +5,36 @@
 install.packages("devtools")
 devtools::install_github("statsmaths/smodels")
 
+# Alternatively, you can just run these function
+# in R directly (because I know some people are
+# having trouble with packages / internet here).
+group_summarize <- function(.data, ...) {
+
+  require("dplyr")
+  data <- group_by_(.data, .dots = lazyeval::lazy_dots(...))
+  group_vars <- sapply(attributes(data)$vars, as.character)
+
+  data <- select_if(data, is.numeric)
+  results <- summarize_all(data, funs(mean, median, sd, sum))
+
+  if (ncol(data) <= length(group_vars) + 1) {
+    these <- (names(results) %in% group_vars)
+    names(results)[!these] <- paste0(setdiff(names(data),group_vars),
+        "_", names(results)[!these])
+  }
+
+  results$n <- summarize(data, n = n())$n
+  ungroup(results)
+}
+
+bin <- function(x, n) {
+
+  breaks <- quantile(x, probs = seq(0, 1, length.out = n + 1),
+                     na.rm = TRUE)
+  cut(x, breaks, include.lowest = TRUE)
+
+}
+
 # Load required functions and packages
 library(tidyverse)
 library(ggrepel)

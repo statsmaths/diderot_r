@@ -1,0 +1,357 @@
+---
+title: "Handout 08: Miscellaneous R"
+date: 03 March 2017
+output:
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+---
+
+
+```{r global_options, include=FALSE}
+library(tufte)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(tidy = FALSE)
+
+library(tidyverse)
+library(smodels)
+library(forcats)
+library(ggrepel)
+
+theme_set(theme_minimal())
+msleep <- na.omit(msleep)
+```
+
+\justify
+
+## Relabeling categories
+
+Let's read in the bikes dataset from the first round of data analysis
+projects. Notice that the season and weather conditions are labeled as
+integers.
+
+```{r}
+bikes <- read_csv("https://statsmaths.github.io/stat_data/bikes.csv")
+bikes
+```
+
+What if we wanted to create a new variable that had these properly
+labeled? To do so we can use the `ifelse` function together with
+mutate. We first set a default value, and then override the default
+one by one.
+
+```{r}
+bikes <- mutate(bikes, season_name = "missing")
+bikes <- mutate(bikes, season_name = ifelse(season == 1, "Winter", season_name))
+bikes <- mutate(bikes, season_name = ifelse(season == 2, "Spring", season_name))
+bikes <- mutate(bikes, season_name = ifelse(season == 3, "Summer", season_name))
+bikes <- mutate(bikes, season_name = ifelse(season == 4, "Fall", season_name))
+select(bikes, season, season_name)
+```
+
+It looks like this requires a lot of code, but its actually very little if
+you make good use of copy and paste.
+
+This relabeling is very useful, and could be used by almost all of
+the datasets at some point. It can also be used to change labels that
+we already have or to create hand-constructed buckets.
+
+## Sampling and selecting data
+
+Another function that we have not seen that may be useful with the
+larger datasets in data analysis two are `sample_frac` and `select`.
+We just saw select in the last code chunk; we give it a dataset name
+followed by the variable names we want to select from the data. These
+are separated by a comma.
+
+```{r}
+select(bikes, season, year, weather)
+```
+
+This is sometimes useful if you are doing something like a group summarize
+on a large dataset and do not want to be overwhelmed with the output. I
+often use it before running `left_join`, or the two functions we will see
+on Wednesday.
+
+The function `sample_frac` is useful to take a random subset of your data.
+This is great for initial exploration of a large dataset, or for when trying
+to do very large scatter plot. We give it the dataset name followed by the
+percentage of the data to keep.
+
+```{r}
+sample_frac(bikes, 0.1)
+```
+
+Notice that the sample will be different each time this is run. That can be
+useful in some situations (with plots you want to make sure the specific
+sample does not change anything important), but in other can be tricky. For
+example, I used this to generate the 10% sample of airline data but don't
+want to accidentally change the sample if I run the code again. To do
+this, run `set.seed` with some constant value first:
+
+```{r}
+set.seed(1)
+sample_frac(bikes, 0.1)
+```
+
+This sample will not change if I run it again (as both lines).
+
+## Advanced summarizing
+
+I wrote the function `group_summarize` because I found that MATH 209 students
+struggled using the raw summarizing commands early in the semester. You may
+find that you need to do some time of summarization that we did not cover,
+so here are some notes on how to do it.
+
+We have to use the function `group_by` and the function summarize on the
+dataset. The first tells R which variables to summarize by, but the second
+tells it which new variables to create:
+
+```{r}
+summarize(group_by(bikes, season_name), min_temp = min(temp),
+          max_temp = max(temp))
+```
+
+Each of the new variables, however, must be described
+explicitly.^[Even more advanced functions `summarize_at`, `summarize_each`,
+`summarize_if`, and `summarize_all` allow for writing generic formulas for describing
+patterns of functions. I use these in the group summarize function.]
+Here we are able to compute the minimum and maximum
+
+Group by can also be combined with the `mutate` function to append summary
+statistics to a group of variables. For example, if we wanted to add
+the average temperature of each season to every row of the dataset, we
+would do this:
+
+```{r}
+temp <- mutate(group_by(bikes, season_name), avg_temp = mean(temp))
+```
+
+I find this command to be very helpful with the sports data.
+
+
+## Gathering data
+
+In some cases we have datasets where multiple columns could be
+treated as individual observations. What does that mean? Think
+of the cancer dataset we used earlier in the semester, taking
+off just the cancer incidence rates:
+
+```{r}
+cancer <- read_csv("https://statsmaths.github.io/stat_data/cancer_inc_data.csv")
+cancer <- select(cancer, breast, colorectal, prostate, lung, melanoma)
+cancer
+```
+
+Several students at the time asked how we could plot all of the
+cancer types on the same plot. The canonical way of doing this
+would be to make a new dataset where each row, instead of being
+a single county, is then just one incidence rate. In other words
+each county will have five rows associated with it. To do this
+we use the `gather` function
+
+```{r}
+gather(cancer)
+```
+
+If we want to give the name of the `key' and `value', those are
+given as the next two parameters to gather:
+
+```{r}
+gather(cancer, type, incidence)
+```
+
+In many cases, there are other variables that we want to be duplicated
+along with the other keys. For example, take the speed skating dataset,
+selecting off a few variables to make it a bit more tractable:
+
+```{r}
+speed <- read_csv("https://statsmaths.github.io/stat_data/speed_skate.csv")
+speed <- select(speed, num_skater, nationality, time_lap1, time_lap2, time_lap3,
+                time_lap4, time_lap5)
+```
+
+We can indicate the variables that should not be gathered by including
+them after the key and value terms with minus signs:
+
+```{r}
+gather(speed, skater, value, -num_skater, -nationality)
+```
+
+Or, we can not use the minus sign and include on those variables
+that should be gathered:
+
+```{r}
+gather(speed, skater, value, time_lap1, time_lap2, time_lap3,
+                time_lap4, time_lap5)
+```
+
+The results are the same; in most cases one or the other will lead to
+less typing. There is also a complement to gathering called
+spreading, available through the function `spread`. You should not
+need that in this class because every dataset is maximally spread
+already.^[It is also a lot more difficult to use because you have to
+be careful about implicit missing values and what to do with them.]
+
+## Faceting
+
+I have seen a lot of you following this pattern:
+
+- Create subsets of the data based on a category you are
+interested in.
+- Replicating plots for each of these groups and
+trying to compare them.
+
+This pattern often makes sense, but there is a better
+way to do this all in one step with facets. They are
+also really easy to use!
+
+Whenever you have a plot and you want that plot to be
+replicated separately over every value of a variable, simply
+add `facet_wrap(~variable)` to the plot like this:
+
+```{r}
+temp <- gather(cancer, type, incidence)
+qplot(incidence, data = temp) + facet_wrap(~type)
+```
+
+A useful option is to add `scales = "free_x"` to allow the
+x-scale scale of each plot to vary:
+
+```{r}
+qplot(incidence, data = temp) + facet_wrap(~type, scale = "free_x")
+```
+
+You may also set `free_y` to vary the y-axis and `free` to vary
+both. Notice how you can cleverly use gather and facet together.
+
+## Releveling factors
+
+Finally, as promised, here is how to relevel a factor value to
+any order you would like. First, specify that the variable you
+want is a factor, or create a new one that is:
+
+```{r}
+temp <- gather(cancer, type, incidence)
+temp <- mutate(temp, type_f = factor(type))
+```
+
+And then use `fct_relevel` with the new list of the levels
+**in quotes**:
+
+```{r}
+temp <- mutate(temp, type_f = fct_relevel(type, "lung", "breast",
+               "colorectal", "melanoma", "prostate"))
+qplot(type_f, data = temp)
+```
+
+Which, from the plot you can has been properly ordered. Of course,
+this plot is uninteresting because every type has exactly the same
+number of observations.
+
+
+## Testing set containment
+
+We have seen many times how to test whether a variable is equal to a
+specific value using `==` or, in the case of numeric variables, to see
+if it is greater than smaller than some fixed cut-off. In the case of
+categorical variables we sometimes may want to see whether a variable
+is equal to a set of values. For example, take the speed skating
+dataset:
+
+```{r}
+speed <- read_csv("https://statsmaths.github.io/stat_data/speed_skate.csv")
+```
+
+How would we construct a subset of only those skaters from the United
+States, Canada, and Germany? Of course, this would work for any specific
+category:
+
+```{r}
+temp <- filter(speed, nationality == "CAN")
+```
+
+But to allow for country being in a set of values we need to combine the
+operator `%in%` and function `c` as follows:
+
+```{r}
+temp <- filter(speed, nationality %in% c("CAN", "USA", "GER"))
+```
+
+And we can see it worked by tabulating the results:
+
+```{r}
+select(group_summarize(temp, nationality), nationality, n)
+```
+
+Notice that only skaters from these three countries remain.
+
+## Tables
+
+We did briefly mention this at one point, but if you want to quickly
+see just the count of one or more categorical variables (or numeric
+ones that can be converted to distinct categories, like year/month/day
+of the week) we may just directly use the function `table`. For example
+the last code snippet could have been more quickly arrived at by:
+
+```{r}
+table(temp$nationality)
+```
+
+Or, we could see where each of these skaters competed with a two-way
+table:
+
+```{r}
+table(temp$nationality, temp$country)
+```
+
+Of course, we could also do this with group summarize, but tables get
+to the point much faster.
+
+## Filtering by another table
+
+Now that we know about the `%in%` command and tables, we can use them
+to do some more advanced filtering. Let's find the names of the most
+common skaters:
+
+```{r}
+tab <- table(speed$name)
+skater_name <- names(tab[tab > 60])
+skater_name
+```
+
+We can subset the skater data to include only these skaters now by:
+
+```{r}
+temp <- filter(speed, name %in% skater_name)
+dim(temp)
+```
+
+This would be useful, for example, in filtering out the most common
+players in the NBA dataset or filtering out the most common dropoff
+locations in the taxi dataset.
+
+## Flipping the coordinates
+
+I've noticed that many of you have successfully made use of the facet and
+`ifelse` commands to build nicer and more readable plots. One thing you
+may find is that if categories have names that are too long the plots may
+become difficult to read. For example, let's take the reduced dataset that
+has only the most frequent skaters and produce a bar plot:
+
+```{r, fig.fullwidth = TRUE, fig.width = 7, fig.height = 4, out.width = "100%"}
+qplot(name, data = temp)
+```
+
+Adding the `coord_flip` command flips the x and y-axes to make this more
+readable:
+
+```{r, fig.fullwidth = TRUE, fig.width = 7, fig.height = 4, out.width = "100%"}
+qplot(name, data = temp) + coord_flip()
+```
+
+Of course, this is useful only when doing barplots and boxplots.^[The first
+has only one input and the second requires the categorical one to be on the
+x-axis, until we flip it at least.] Otherwise we could just flip them manually
+as with a scatter plot.
+

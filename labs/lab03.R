@@ -13,6 +13,10 @@ theme_set(theme_minimal())
 
 mpg <- read_csv("https://statsmaths.github.io/stat_data/mpg.csv")
 
+qplot(displ, cty, data = mpg, color = class, size = year) +
+  labs(color = "and color", size = "heres size")
+
+
 # The variables in the dataset are:
 #
 #   manufacturer - name of the car's manufacturer

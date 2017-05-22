@@ -7,7 +7,7 @@
 # errors when loading address these *before* doing anything else.
 
 # Load required functions and packages
-library(tidyverse)
+library(ggplot2)
 
 theme_set(theme_minimal())
 

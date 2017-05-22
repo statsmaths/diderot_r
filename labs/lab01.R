@@ -413,15 +413,15 @@ pirates[4, 2] <- 3
 pirates[2, ]
 
 ##############################################################################
-# 58. To get an entire column, omit the row index. Retrieve the fourth column:
+# 58. To get an entire column, omit the row index. Retrieve the second column:
 
-pirates[, 4]
+pirates[, 2]
 
 ##############################################################################
 # 59. You can read multiple rows or columns by providing a vector or sequence
-# with their indices. Try retrieving columns 2 through 4:
+# with their indices. Try retrieving columns 1 through 2:
 
-pirates[, 2:4]
+pirates[, 1:2]
 
 ##############################################################################
 # 60. You could instead provide a column name as a string in brackets.
