@@ -36,8 +36,9 @@ bin <- function(x, n) {
 }
 
 # Load required functions and packages
-library(tidyverse)
-library(ggrepel)
+library(ggplot2)
+library(dplyr)
+library(readr)
 library(smodels)
 
 theme_set(theme_minimal())

@@ -2,10 +2,9 @@
 # Name:
 
 # Load required functions and packages
-library(tidyverse)
-library(smodels)
-library(forcats)
-library(ggrepel)
+library(ggplot2)
+library(dplyr)
+library(readr)
 
 theme_set(theme_minimal())
 

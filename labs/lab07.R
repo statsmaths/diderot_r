@@ -14,7 +14,9 @@ devtools::install_github("dkahle/ggmap")
 devtools::install_github("hadley/ggplot2@v2.2.0")​
 
 # Load required functions and packages
-library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(readr)
 library(smodels) # or functions from lab06.R
 library(ggmap)
 
