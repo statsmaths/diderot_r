@@ -43,7 +43,7 @@ theme_set(theme_minimal())
 # file on the desktop. Clik on "Session -> Set Working Directory" and set it
 # to your desktop. Now, read in your data using:
 
-mydata <- read_csv("data.csv")
+mydata <- read_csv2("~/Desktop/friends.csv")
 
 ##############################################################################
 # 03. Plot a histogram of on of the numeric variables. What appears to be a

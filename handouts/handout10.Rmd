@@ -1,0 +1,179 @@
+---
+title: "Handout 10: Tidytext"
+date: Taylor Arnold
+output:
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+---
+
+
+```{r global_options, include=FALSE}
+library(tufte)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(tidy = FALSE)
+
+library(tidyverse)
+library(smodels)
+library(forcats)
+library(ggrepel)
+library(stringr)
+
+theme_set(theme_minimal())
+msleep <- na.omit(msleep)
+```
+
+\justify
+
+
+This handout describes how to start extracting words
+from raw text using the package **tidytext**.
+To load the package call
+```{r}
+library(tidytext)
+```
+I will also make use of the package `janeaustenr`
+which contains the complete text of every Jane Austen
+novel as a useful source of data for this handout:
+```{r}
+library(janeaustenr)
+```
+You do not need to install or load the package unless
+you want to replicate the code here. I will save the
+data to a new data frame named `ja`, removing empty
+lines:
+
+```{r}
+ja <- janeaustenr::austen_books()
+ja <- mutate(ja, book = as.character(book))
+ja
+ja <- filter(ja, text != "")
+```
+
+# Tokens
+
+Tokenization is the process of splitting text into individual
+words. To do this in the **tidytext** package, we use the
+function `unnest_tokens`. It takes a dataset, the name of the
+column that will hold the words, and the name of the variable
+that currently holds the raw text. To use it on the dataset
+`mansfieldpark`, for example, we can do this:
+```{r}
+ja_word <- unnest_tokens(ja, word, text)
+ja_word
+```
+The output is a new data frame with exactly one word per line.
+The first column keeps track of which text the word is a part
+of.
+
+What might be want to do with this dataset? As a start, perhaps
+would could figure out what the primary themes are based on
+the words that are used. The **dplyr** verb `count`, along with
+arrange is a useful place to start:
+
+```{r}
+count(ja_word, book, word, sort = TRUE)
+```
+
+Unfortunately, the top words are all very common functional
+words that don't tell us much about what is actually going on.
+What to do now? Lucky for us, **tidytext** contains a list of
+common words such as these called `stop_words`.
+
+```{r}
+stop_words
+```
+
+We can remove these then with a call to the function
+`anti_join`:
+
+```{r}
+ja_word <- anti_join(ja_word, stop_words)
+count(ja_word, book, word, sort = TRUE)
+```
+
+Ah okay, at least we are actually getting somewhere now.
+All of these are at least characters in the various texts!
+We need some more work for filtering out the words that are
+of interest to us.
+
+# Part of speech
+
+The **tidytext** package also contains a dataset called
+`parts_of_speech`:
+
+```{r}
+parts_of_speech
+```
+
+Using this we can do a very basic form of part of speech
+tagging by left joining the `ja_word` data with this.
+In fact, we will actually use an inner join here to
+ignore words that have no match:
+
+```{r}
+ja_pos <- inner_join(ja_word, parts_of_speech)
+```
+
+Notice that here there is a copy of words that occur with
+multiple parts of speech. Now, what happens if we find the
+top words of specific parts of speech:
+
+
+```{r}
+count(filter(ja_pos, pos == "Adjective"),
+      book, word, sort = TRUE)
+```
+```{r}
+count(filter(ja_pos, pos == "Noun"),
+      book, word, sort = TRUE)
+```
+```{r}
+count(filter(ja_pos, str_detect(pos, "Verb")),
+      book, word, sort = TRUE)
+```
+
+Still somewhat rough, primarily because the
+part of speech names do not distinguish proper
+and non-proper nouns.
+
+# Sentiment
+
+Along the same idea, the **tidytext** dataset
+also contains a set of sentiment scores for various
+words. There are three sets contained in the same
+data `sentiments`. The first is the NRC Emotion
+Lexicon:
+
+```{r}
+filter(sentiments, lexicon == "nrc")
+```
+
+The sentiment lexicon from Bing Liu
+
+```{r}
+filter(sentiments, lexicon == "bing")
+
+```
+
+And the lexicon of Finn Arup Nielsen:
+
+```{r}
+filter(sentiments, lexicon == "AFINN")
+
+```
+
+We can merge this into the novels as well to try
+to see the different moods of the various
+books:
+
+```{r}
+bing <- filter(sentiments, lexicon == "bing")
+ja_bing <- inner_join(ja_word, bing)
+count(ja_bing, book, sentiment)
+```
+
+So *Northanger Abbey* is the most positive novel
+and *Persuasion* is the most negative.
+
+
