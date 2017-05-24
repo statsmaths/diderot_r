@@ -92,7 +92,7 @@ The length in tokens of each address is calculated similarly by grouping and sum
 the document id level. The results can be joined with the document table to get the year
 of the speech and then piped in a **ggplot2** command to illustrate how the length of
 the State of the Union has changed over time.
-```{r, eval = TRUE, results = 'hide'}
+```{r, eval = FALSE}
 cleanNLP::get_token(sotu) %>%
   count(id) %>%
   left_join(cleanNLP::get_document(sotu)) %>%
@@ -106,7 +106,7 @@ document. The output shows that their are certainly time trends
 to the address length, with the form of the address (written versus spoken) also having a large
 effect on document length.
 
-```{r, results = "asis", echo = FALSE, out.width = "100%", fig.fullwidth = TRUE, eval = TRUE, fig.cap = "The default RStudio prompt when first logging in."}
+```{r, results = "asis", echo = FALSE, out.width = "100%", fig.fullwidth = TRUE, eval = TRUE, fig.cap = "Length of each State of the Union address, in total number of tokens. Color shows whether the address was given as a speech or delivered as a written document."}
 knitr::include_graphics("img/num_tokens.pdf")
 ```
 
@@ -187,6 +187,10 @@ A scatter plot of the speeches using these components is shown.
 There is a definitive temporal pattern to the documents, with the
 20th century addresses forming a distinct cluster on the right side of the plot.
 
+```{r, results = "asis", echo = FALSE, out.width = "100%", fig.fullwidth = TRUE, eval = TRUE, fig.cap = "State of the Union Speeches, highlighting each President's first address, plotted using the first two principal components of the term frequency matrix of non-proper nouns."}
+knitr::include_graphics("img/pca_plot.pdf")
+```
+
 The output of the `get_tfidf` function may be given directly to the `LDA`
 function in the package **topicmodels**. The topic model function requires raw
 counts, so the type variable in `get_tfidf` is set to ``tf''; the results may
@@ -205,6 +209,10 @@ non-contiguous periods of the presidency. The Energy topic, for example, appears
 1950s and crops up again during the energy crisis of the 1970s. The ``world, man, freedom,
 force, defense'' topic peaks during both World Wars, but is absent during the 1920s and early
 1930s.
+
+```{r, results = "asis", echo = FALSE, out.width = "100%", fig.fullwidth = TRUE, eval = TRUE, fig.cap = "Distribution of topic model posterior probabilities over time on the State of the Union corpus. Top five words associated with each topic are displayed, with topics sorted by the median year of all documents placed into the respective topic using the maximum posterior probabilities."}
+knitr::include_graphics("img/tm_sotu.pdf")
+```
 
 Finally, the **cleanNLP** data model is also convenient for building predictive models.
 The State of the Union corpus does not lend itself to an obviously applicable prediction problem.
@@ -242,10 +250,13 @@ best value of the model's tuning parameter.
 library(glmnet)
 model <- cv.glmnet(mat$tf[meta$train,], meta$y[meta$train], family = "binomial")
 ```
-A boxplot of the predicted classes for each address is given in Figure~\ref{figure:glmnet}.
 The algorithm does a very good job of separating the speeches. Looking
 at the odd years versus even years (the training and testing sets, respectively)
 indicates that the model has not been over-fit.
+
+```{r, results = "asis", echo = FALSE, out.width = "100%", fig.fullwidth = TRUE, eval = TRUE, fig.cap = "Boxplot of predicted probabilities, at the sentence level, for all 16 State of the Union addresses by Presidents George W. Bush and Barack Obama. The probability represents the extent to which the model believe the sentence was spoken by President Obama. Odd years were used for training and even years for testing. Cross-validation on the training set was used, with the one standard error rule, to set the lambda tuning parameter."}
+knitr::include_graphics("img/glmnet_plot.pdf")
+```
 
 One benefit of the penalized linear regression model is that it is possible to interpret the
 coefficients in a meaningful way. Here are the non-zero elements of the regression vector,
