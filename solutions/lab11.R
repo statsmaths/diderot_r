@@ -20,12 +20,12 @@ ja <- read_csv("http://math209.taylorarnold.net/janeausten.csv")
 # text. I suggest saving as a dataset named `temp` and looking at it in the
 # data viewer. What do you notice about these?
 
-
+temp <- filter(ja, pos == "NNP")
+temp <- count(temp, book, word, sort = TRUE)
 
 ##############################################################################
 # 03. Use the named entity tags to find the most frequently mentioned people
 # in each text. How does this relate to just using the POS tags?
-
 
 
 ##############################################################################
@@ -33,11 +33,9 @@ ja <- read_csv("http://math209.taylorarnold.net/janeausten.csv")
 # mentioned locations. Did these pop up in your answer to question 2?
 
 
-
 ##############################################################################
 # 05. Compute the average sentence lengths for each novel and draw a plot
 # showing these.
-
 
 
 ##############################################################################
@@ -45,17 +43,23 @@ ja <- read_csv("http://math209.taylorarnold.net/janeausten.csv")
 # geom_boxplot().
 
 
-
 ##############################################################################
 # 07. Create a dataset pride containing only those lines related to the novel
 # "Pride & Prejudice":
 
-
+pride <- filter(ja, book == "Pride & Prejudice")
 
 ##############################################################################
 # 08. Using the dependencies, what verbs are most associated with Edmund?
 # How about Crawford, Rushworth, and Norris? How, if at all, do these differ?
 
+temp <- filter(pride, word == "Edmund")
+temp <- filter(temp, relation == "nsubj")
+count(temp, lemma_source, sort = TRUE)
+
+temp <- filter(pride, word == "Crawford")
+temp <- filter(temp, relation == "nsubj")
+count(temp, lemma_source, sort = TRUE)
 
 
 ##############################################################################
