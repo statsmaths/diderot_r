@@ -156,7 +156,7 @@ which came under the shadow of the September 11th terrorist attacks, shows a dra
 in focus.
 ```{r, eval = TRUE}
 temp <- left_join(tokens, doc)
-temp <- filter(temp, year == 2001, relation == "dobj")
+temp <- filter(temp, year == 2002, relation == "dobj")
 temp <- select(temp, id = id, start = word, word = lemma_source)
 temp <- left_join(temp, word_frequency)
 temp <- filter(temp, frequency < 0.0005)

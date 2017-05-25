@@ -57,7 +57,7 @@ init_coreNLP()
 
 # Or, the spaCy backend:
 
-init_spaCy()
+init_spaCy(model_name = "fr")
 
 # Unfortunately, these both necessitate some non-trivial set-up. The first
 # requires Java and the second a working version of Python... we won't have

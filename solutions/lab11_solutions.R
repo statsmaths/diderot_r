@@ -6,6 +6,8 @@ library(stringr)
 library(dplyr)
 library(ggplot2)
 library(readr)
+library(smodels)
+library(cleanNLP)
 
 theme_set(theme_minimal())
 
@@ -22,26 +24,38 @@ ja <- read_csv("http://math209.taylorarnold.net/janeausten.csv")
 
 temp <- filter(ja, pos == "NNP")
 temp <- count(temp, book, word, sort = TRUE)
+View(temp)
 
 ##############################################################################
 # 03. Use the named entity tags to find the most frequently mentioned people
 # in each text. How does this relate to just using the POS tags?
 
+temp <- filter(ja, entity_type == "PERSON")
+temp <- count(temp, book, entity, sort = TRUE)
+View(temp)
 
 ##############################################################################
 # 04. Use the named entity tags again, but now find the most frequently
 # mentioned locations. Did these pop up in your answer to question 2?
 
+temp <- filter(ja, entity_type == "GPE")
+temp <- count(temp, book, entity, sort = TRUE)
+View(temp)
 
 ##############################################################################
 # 05. Compute the average sentence lengths for each novel and draw a plot
 # showing these.
 
+temp <- count(ja, book, sid)
+temp <- group_summarize(temp, book)
+qplot(book, n_mean, data = temp)
 
 ##############################################################################
 # 06. Now measure the number of words per sentence using a boxplot with
 # geom_boxplot().
 
+temp <- count(ja, book, sid)
+qplot(book, n, data = temp, geom = "boxplot")
 
 ##############################################################################
 # 07. Create a dataset pride containing only those lines related to the novel
@@ -61,6 +75,13 @@ temp <- filter(pride, word == "Crawford")
 temp <- filter(temp, relation == "nsubj")
 count(temp, lemma_source, sort = TRUE)
 
+temp <- filter(pride, word == "Rushworth")
+temp <- filter(temp, relation == "nsubj")
+count(temp, lemma_source, sort = TRUE)
+
+temp <- filter(pride, word == "Norris")
+temp <- filter(temp, relation == "nsubj")
+count(temp, lemma_source, sort = TRUE)
 
 ##############################################################################
 # 09. As in the worksheet, create a temporary dataset consisting of only
@@ -69,7 +90,10 @@ count(temp, lemma_source, sort = TRUE)
 # Well this technique describes what is going on in each novel. Note: you
 # will probably have to do this seperately for each one.
 
-
-
+temp <- filter(pride, relation == "dobj", upos %in% c("PROPN", "NOUN"))
+temp <- left_join(temp, word_frequency, by = c("word_source" = "word"))
+temp <- filter(temp, frequency < 0.001)
+temp <- count(temp, word, word_source, sort = TRUE)
+View(temp)
 
 

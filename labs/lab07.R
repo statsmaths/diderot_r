@@ -143,9 +143,9 @@ temp <- filter(airbnb, neighbourhood == "Reuilly")
 # following code:
 
 people <- c("Taylor Arnold", "Paula Lissón", "Mickey Mouse", "Arnold Schwarzenegger")
-grepl(people, "Arnold")
-grepl(people, "a")
-grepl(people, "arnold", ignore.case = TRUE)
+grepl("Arnold", people)
+grepl("a", people)
+grepl("arnold", , people, ignore.case = TRUE)
 
 ##############################################################################
 # 14. The grepl function is very useful to use in combination with the filter
